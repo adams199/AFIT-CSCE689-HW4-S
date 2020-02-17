@@ -16,7 +16,7 @@ public:
    ~TCPConn();
 
    // The current status of the connection
-   enum statustype { s_none, s_connecting, s_connected, s_datatx, s_datarx, s_waitack, s_hasdata };
+   enum statustype { s_none, s_connecting, s_encryptClient, s_encryptServer, s_connected, s_datatx, s_datarx, s_waitack, s_hasdata };
 
    statustype getStatus() { return _status; };
 
@@ -72,9 +72,13 @@ protected:
    // Functions to execute various stages of a connection 
    void sendSID();
    void waitForSID();
+   void encryptClient();
+   void encryptServer();
    void transmitData();
    void waitForData();
    void awaitAck();
+
+   std::string serverRand, clientRand;
 
    // Looks for commands in the data stream
    std::vector<uint8_t>::iterator findCmd(std::vector<uint8_t> &buf,
@@ -99,6 +103,8 @@ private:
    statustype _status = s_none;
 
    SocketFD _connfd;
+
+   std::string _stringRand; /// for authentification comparison
  
    std::string _node_id; // The username this connection is associated with
    std::string _svr_id;  // The server ID that hosts this connection object

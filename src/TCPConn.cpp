@@ -177,12 +177,22 @@ void TCPConn::handleConnection() {
             sendSID();
             break;
 
-         // Server: Wait for the SID from a newly-connected client, then send our SID
+         // Server: Wait for the SID from a newly-connected client, then send our random number
          case s_connected:
             waitForSID();
             break;
    
-         // Client: connecting user - replicate data
+         //Client: Get random number, encrypt, and send back with own random string
+         case s_encryptClient:
+            encryptClient();
+            break;
+
+         // Server authenticate sent random, encrypt and send back recieved random
+         case s_encryptServer:
+            encryptServer();
+            break;
+
+         // Client: connecting user - replicate data, and auths client encrpyed random
          case s_datatx:
             transmitData();
             break;
@@ -224,11 +234,12 @@ void TCPConn::sendSID() {
    wrapCmd(buf, c_sid, c_endsid);
    sendData(buf);
 
-   _status = s_datatx; 
+   //_status = s_datatx; 
+   _status = s_encryptClient;
 }
 
 /**********************************************************************************************
- * waitForSID()  - receives the SID and sends our SID
+ * waitForSID()  - receives the SID and sends our random string
  *
  *    Throws: socket_error for network issues, runtime_error for unrecoverable issues
  **********************************************************************************************/
@@ -254,17 +265,93 @@ void TCPConn::waitForSID() {
       setNodeID(node.c_str());
 
       // Send our Node ID
-      buf.assign(_svr_id.begin(), _svr_id.end());
+      //buf.assign(_svr_id.begin(), _svr_id.end());  new
+      genRandString(_stringRand, 32);
+      buf = stringToVector(_stringRand);
       wrapCmd(buf, c_sid, c_endsid);
       sendData(buf);
 
-      _status = s_datarx;
+      //_status = s_datarx;
+      _status = s_encryptServer;
+   }
+}
+
+/**********************************************************************************************
+*  encryptClient()   - Client: Get random string, encrypt, and send back with own random number
+**********************************************************************************************/
+void TCPConn::encryptClient()
+{
+   if (_connfd.hasData()) {
+      std::vector<uint8_t> buf, ownRand;
+
+      if (!getData(buf))
+         return;
+
+      if (!getCmdData(buf, c_sid, c_endsid)) {
+         std::stringstream msg;
+         msg << "Random string from server invalid format. Cannot authenticate.";
+         _server_log.writeLog(msg.str().c_str());
+         disconnect();
+         return;
+      }
+
+      encryptData(buf); // encrypting recieve
+      genRandString(_stringRand, 32);
+      ownRand = stringToVector(_stringRand);
+      ownRand.insert(ownRand.end(), buf.begin(), buf.end()); // put them together to send
+      wrapCmd(ownRand, c_sid, c_endsid);
+      sendData(ownRand);
+
+      _status = s_datatx; 
    }
 }
 
 
 /**********************************************************************************************
- * transmitData()  - receives the SID from the server and transmits data
+*  encryptServer()   - Server authenticate sent random, encrypt and send back recieved random
+**********************************************************************************************/
+void TCPConn::encryptServer()
+{
+   if (_connfd.hasData()) {
+      std::vector<uint8_t> buf, randS;
+      std::string encrypted;
+
+      if (!getData(buf))
+         return;
+
+      if (!getCmdData(buf, c_sid, c_endsid)) {
+         std::stringstream msg;
+         msg << "Random encrypted string from client invalid format. Cannot authenticate.";
+         _server_log.writeLog(msg.str().c_str());
+         disconnect();
+         return;
+      }
+
+      decryptData(buf);
+      for(int i = 0; i < 32; i++) // get the sent string
+         randS.push_back(buf.at(i));
+      for(auto it = buf.begin()+32; it != buf.end(); it++) //get the return encrypted string
+         encrypted.push_back(*it);
+
+      if(encrypted != _stringRand)
+      {
+         std::stringstream msg;
+         msg << "Random encrypted string from client doesn't match sent string. Cannot authenticate.";
+         _server_log.writeLog(msg.str().c_str());
+         disconnect();
+         return;
+      }
+      
+      encryptData(randS);
+      wrapCmd(randS, c_sid, c_endsid);
+      sendData(randS);
+
+      _status = s_datarx;
+   }
+}
+
+/**********************************************************************************************
+ * transmitData()  - receives the SID from the server and transmits data; auths client encrpyed random
  *
  *    Throws: socket_error for network issues, runtime_error for unrecoverable issues
  **********************************************************************************************/
@@ -281,6 +368,17 @@ void TCPConn::transmitData() {
       if (!getCmdData(buf, c_sid, c_endsid)) {
          std::stringstream msg;
          msg << "SID string from connected server invalid format. Cannot authenticate.";
+         _server_log.writeLog(msg.str().c_str());
+         disconnect();
+         return;
+      }
+
+      decryptData(buf);
+      std::string recievedS = vectorToString(buf);
+      if(recievedS != _stringRand)
+      {
+         std::stringstream msg;
+         msg << "Random encrypted string from server doesn't match sent string. Cannot authenticate.";
          _server_log.writeLog(msg.str().c_str());
          disconnect();
          return;
