@@ -313,8 +313,7 @@ void TCPConn::encryptClient()
 void TCPConn::encryptServer()
 {
    if (_connfd.hasData()) {
-      std::vector<uint8_t> buf, randS;
-      std::string encrypted;
+      std::vector<uint8_t> buf, randS, encrypted;
 
       if (!getData(buf))
          return;
@@ -327,13 +326,15 @@ void TCPConn::encryptServer()
          return;
       }
 
-      decryptData(buf);
       for(int i = 0; i < 32; i++) // get the sent string
          randS.push_back(buf.at(i));
+
       for(auto it = buf.begin()+32; it != buf.end(); it++) //get the return encrypted string
          encrypted.push_back(*it);
+      decryptData(encrypted);
 
-      if(encrypted != _stringRand)
+      std::string unenString = vectorToString(encrypted);
+      if(unenString != _stringRand)
       {
          
          std::stringstream msg;
@@ -375,11 +376,11 @@ void TCPConn::transmitData() {
       }
 
       decryptData(buf);
-      std::string recievedS = vectorToString(buf);
-      if(recievedS != _stringRand)
+      std::string receivedS = vectorToString(buf);
+      if(receivedS != _stringRand)
       {
          if (_verbosity >= 3)
-         std::cout << "Random string " << _stringRand << " does not match " << recievedS << "\n";
+         std::cout << "Random string " << _stringRand << " does not match " << receivedS << "\n";
          std::stringstream msg;
          msg << "Random encrypted string from server doesn't match sent string. Cannot authenticate.";
          _server_log.writeLog(msg.str().c_str());
