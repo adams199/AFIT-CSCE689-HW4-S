@@ -335,6 +335,7 @@ void TCPConn::encryptServer()
 
       if(encrypted != _stringRand)
       {
+         
          std::stringstream msg;
          msg << "Random encrypted string from client doesn't match sent string. Cannot authenticate.";
          _server_log.writeLog(msg.str().c_str());
@@ -377,6 +378,8 @@ void TCPConn::transmitData() {
       std::string recievedS = vectorToString(buf);
       if(recievedS != _stringRand)
       {
+         if (_verbosity >= 3)
+         std::cout << "Random string " << _stringRand << " does not match " << recievedS << "\n";
          std::stringstream msg;
          msg << "Random encrypted string from server doesn't match sent string. Cannot authenticate.";
          _server_log.writeLog(msg.str().c_str());
