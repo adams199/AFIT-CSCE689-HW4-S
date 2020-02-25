@@ -249,6 +249,7 @@ void TCPConn::waitForSID() {
    // If data on the socket, should be our Auth string from our host server
    if (_connfd.hasData()) {
       std::vector<uint8_t> buf;
+      std::string both;
 
       if (!getData(buf))
          return;
@@ -264,10 +265,10 @@ void TCPConn::waitForSID() {
       std::string node(buf.begin(), buf.end());
       setNodeID(node.c_str());
 
-      // Send our Node ID
-      //buf.assign(_svr_id.begin(), _svr_id.end());  new
+      // Send our Node ID and rand string
       genRandString(_stringRand, 32);
-      buf = stringToVector(_stringRand);
+      both = _stringRand + _svr_id;
+      buf = stringToVector(both);
       wrapCmd(buf, c_sid, c_endsid);
       sendData(buf);
 
@@ -282,7 +283,8 @@ void TCPConn::waitForSID() {
 void TCPConn::encryptClient()
 {
    if (_connfd.hasData()) {
-      std::vector<uint8_t> buf, ownRand;
+      std::vector<uint8_t> buf, ownRand, randS;
+      std::string node;
 
       if (!getData(buf))
          return;
@@ -295,10 +297,19 @@ void TCPConn::encryptClient()
          return;
       }
 
-      encryptData(buf); // encrypting recieve
+      for(int i = 0; i < 32; i++) // get the sent string
+         randS.push_back(buf.at(i));
+
+      for(auto it = buf.begin()+32; it != buf.end(); it++) //get the nodeID
+         node.push_back(*it);
+
+      setNodeID(node.c_str());
+
+
+      encryptData(randS); // encrypting recieve
       genRandString(_stringRand, 32);
       ownRand = stringToVector(_stringRand);
-      ownRand.insert(ownRand.end(), buf.begin(), buf.end()); // put them together to send
+      ownRand.insert(ownRand.end(), randS.begin(), randS.end()); // put them together to send
       wrapCmd(ownRand, c_sid, c_endsid);
       sendData(ownRand);
 
@@ -388,8 +399,8 @@ void TCPConn::transmitData() {
          return;
       }
 
-      std::string node(buf.begin(), buf.end());
-      setNodeID(node.c_str());
+      //std::string node(buf.begin(), buf.end());
+      //setNodeID(node.c_str());
 
       // Send the replication data
       sendData(_outputbuf);
