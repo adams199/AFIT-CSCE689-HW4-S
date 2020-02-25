@@ -230,9 +230,9 @@ void ReplServer::addSingleDronePlot(std::vector<uint8_t> &data) {
             _timediff2 = (*it).timestamp - tmp_plot.timestamp; // set difference
          
 
-   if(tmp_plot.node_id == 2)
+   if(tmp_plot.node_id == 2 && _timediff1 != -10)
       tmp_plot.timestamp += _timediff1;  // add the difference
-   else if(tmp_plot.node_id == 3)
+   else if(tmp_plot.node_id == 3 && _timediff2 != -10)
       tmp_plot.timestamp += _timediff2;
 
    _plotdb.addPlot(tmp_plot.drone_id, tmp_plot.node_id, tmp_plot.timestamp, tmp_plot.latitude,
