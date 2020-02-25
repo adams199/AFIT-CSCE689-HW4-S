@@ -40,6 +40,8 @@ private:
 
    unsigned int queueNewPlots();
 
+   int _timediff1 = -10; // difference from 1 and 2
+   int _timediff2 = -10; // difference from 1 and 3
 
    QueueMgr _queue;    
 
