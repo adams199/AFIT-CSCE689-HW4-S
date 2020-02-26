@@ -219,33 +219,7 @@ void ReplServer::addSingleDronePlot(std::vector<uint8_t> &data) {
 
    tmp_plot.deserialize(data);
 
-   int checkchange1 = _timediff1;
-   int checkchange2 = _timediff2;
-
-   if(_timediff1 == -10 && tmp_plot.node_id == 2) // if we havnt found the time diff between 1 and 2
-      for(auto it = _plotdb.begin(); it != _plotdb.end(); it++) // if plot with same lat and long and its masters plot,
-         if(tmp_plot.latitude == (*it).latitude && tmp_plot.longitude == (*it).longitude && tmp_plot.drone_id == (*it).drone_id && (*it).node_id == 1) {
-            _timediff1 = (*it).timestamp - tmp_plot.timestamp; // set difference
-            break; }
-
-   if(_timediff2 == -10 && tmp_plot.node_id == 3) // if we havnt found the time diff between 1 and 3
-      for(auto it = _plotdb.begin(); it != _plotdb.end(); it++)  // if plot with same lat and long and its masters plot,
-         if(tmp_plot.latitude == (*it).latitude && tmp_plot.longitude == (*it).longitude && tmp_plot.drone_id == (*it).drone_id && (*it).node_id == 1) {
-            _timediff2 = (*it).timestamp - tmp_plot.timestamp; // set difference
-            break; }
-
-   if(_timediff1 != checkchange1)
-   {
-      for(auto it = _plotdb.begin(); it != _plotdb.end(); it++)
-         if((*it).node_id == 2)
-            (*it).timestamp += _timediff1;
-   }
-   if(_timediff2 != checkchange2)
-   {
-      for(auto it = _plotdb.begin(); it != _plotdb.end(); it++)
-         if((*it).node_id == 3)
-            (*it).timestamp += _timediff2;
-   }
+   handleDiff(tmp_plot);
 
    std::cout << "Current time " << this->getAdjustedTime() << " found differences " << _timediff1 << " " << _timediff2 << "\n";
    
@@ -262,10 +236,107 @@ void ReplServer::addSingleDronePlot(std::vector<uint8_t> &data) {
    }
    if(add)
       _plotdb.addPlot(tmp_plot.drone_id, tmp_plot.node_id, tmp_plot.timestamp, tmp_plot.latitude,
-                                                         tmp_plot.longitude);
+                                                         tmp_plot.longitude, false);
 }
 
 
 void ReplServer::shutdown(){
    _shutdown = true;
+}
+
+
+void ReplServer::handleDiff(DronePlot &tmp_plot)
+{
+   if(this->_plotdb.dbnode == 1)
+   {
+      int checkchange1 = _timediff1;
+      int checkchange2 = _timediff2;
+
+      if(_timediff1 == -10 && tmp_plot.node_id == 2) // if we havnt found the time diff between 1 and 2
+         for(auto it = _plotdb.begin(); it != _plotdb.end(); it++) // if plot with same lat and long and its masters plot,
+            if(tmp_plot.latitude == (*it).latitude && tmp_plot.longitude == (*it).longitude && tmp_plot.drone_id == (*it).drone_id && (*it).node_id == 1) {
+               _timediff1 = (*it).timestamp - tmp_plot.timestamp; // set difference
+               break; }
+
+      if(_timediff2 == -10 && tmp_plot.node_id == 3) // if we havnt found the time diff between 1 and 3
+         for(auto it = _plotdb.begin(); it != _plotdb.end(); it++)  // if plot with same lat and long and its masters plot,
+            if(tmp_plot.latitude == (*it).latitude && tmp_plot.longitude == (*it).longitude && tmp_plot.drone_id == (*it).drone_id && (*it).node_id == 1) {
+               _timediff2 = (*it).timestamp - tmp_plot.timestamp; // set difference
+               break; }
+
+      if(_timediff1 != checkchange1)
+      {
+         for(auto it = _plotdb.begin(); it != _plotdb.end(); it++)
+            if((*it).node_id == 2)
+               (*it).timestamp += _timediff1;
+      }
+      if(_timediff2 != checkchange2)
+      {
+         for(auto it = _plotdb.begin(); it != _plotdb.end(); it++)
+            if((*it).node_id == 3)
+               (*it).timestamp += _timediff2;
+      }
+   }
+
+   if(this->_plotdb.dbnode == 2)
+   {
+      int checkchange1 = _timediff1;
+      int checkchange2 = _timediff2;
+
+      if(_timediff1 == -10 && tmp_plot.node_id == 1) // if we havnt found the time diff between 2 and 1
+         for(auto it = _plotdb.begin(); it != _plotdb.end(); it++) // if plot with same lat and long and its masters plot,
+            if(tmp_plot.latitude == (*it).latitude && tmp_plot.longitude == (*it).longitude && tmp_plot.drone_id == (*it).drone_id && (*it).node_id == 2) {
+               _timediff1 = (*it).timestamp - tmp_plot.timestamp; // set difference
+               break; }
+
+      if(_timediff2 == -10 && tmp_plot.node_id == 3) // if we havnt found the time diff between 2 and 3
+         for(auto it = _plotdb.begin(); it != _plotdb.end(); it++)  // if plot with same lat and long and its masters plot,
+            if(tmp_plot.latitude == (*it).latitude && tmp_plot.longitude == (*it).longitude && tmp_plot.drone_id == (*it).drone_id && (*it).node_id == 2) {
+               _timediff2 = (*it).timestamp - tmp_plot.timestamp; // set difference
+               break; }
+
+      if(_timediff1 != checkchange1)
+      {
+         for(auto it = _plotdb.begin(); it != _plotdb.end(); it++)
+            if((*it).node_id == 1)
+               (*it).timestamp += _timediff1;
+      }
+      if(_timediff2 != checkchange2)
+      {
+         for(auto it = _plotdb.begin(); it != _plotdb.end(); it++)
+            if((*it).node_id == 3)
+               (*it).timestamp += _timediff2;
+      }
+   }
+
+   if(this->_plotdb.dbnode == 3)
+   {
+      int checkchange1 = _timediff1;
+      int checkchange2 = _timediff2;
+
+      if(_timediff1 == -10 && tmp_plot.node_id == 2) // if we havnt found the time diff between 3 and 2
+         for(auto it = _plotdb.begin(); it != _plotdb.end(); it++) // if plot with same lat and long and its masters plot,
+            if(tmp_plot.latitude == (*it).latitude && tmp_plot.longitude == (*it).longitude && tmp_plot.drone_id == (*it).drone_id && (*it).node_id == 3) {
+               _timediff1 = (*it).timestamp - tmp_plot.timestamp; // set difference
+               break; }
+
+      if(_timediff2 == -10 && tmp_plot.node_id == 1) // if we havnt found the time diff between 3 and 1
+         for(auto it = _plotdb.begin(); it != _plotdb.end(); it++)  // if plot with same lat and long and its masters plot,
+            if(tmp_plot.latitude == (*it).latitude && tmp_plot.longitude == (*it).longitude && tmp_plot.drone_id == (*it).drone_id && (*it).node_id == 3) {
+               _timediff2 = (*it).timestamp - tmp_plot.timestamp; // set difference
+               break; }
+
+      if(_timediff1 != checkchange1)
+      {
+         for(auto it = _plotdb.begin(); it != _plotdb.end(); it++)
+            if((*it).node_id == 2)
+               (*it).timestamp += _timediff1;
+      }
+      if(_timediff2 != checkchange2)
+      {
+         for(auto it = _plotdb.begin(); it != _plotdb.end(); it++)
+            if((*it).node_id == 1)
+               (*it).timestamp += _timediff2;
+      }
+   }
 }

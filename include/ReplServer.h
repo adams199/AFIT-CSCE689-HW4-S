@@ -40,8 +40,9 @@ private:
 
    unsigned int queueNewPlots();
 
-   int _timediff1 = -10; // difference from 2 
-   int _timediff2 = -10; // difference from 3
+   int _timediff1 = -10; // difference from one of them
+   int _timediff2 = -10; // difference from the other
+   void handleDiff(DronePlot &tmp_plot);
 
    QueueMgr _queue;    
 

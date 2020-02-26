@@ -232,8 +232,10 @@ DronePlotDB::~DronePlotDB() {
  *             
  *****************************************************************************************/
 
-void DronePlotDB::addPlot(int drone_id, int node_id, time_t timestamp, float latitude, float longitude) {
+void DronePlotDB::addPlot(int drone_id, int node_id, time_t timestamp, float latitude, float longitude, bool fromAnt) {
    // First lock the mutex (blocking)
+   if(fromAnt && dbnode == -10)
+      dbnode = node_id;
    pthread_mutex_lock(&_mutex);
 
    _dbdata.emplace_back(drone_id, node_id, timestamp, latitude, longitude);

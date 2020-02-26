@@ -66,7 +66,7 @@ public:
    virtual ~DronePlotDB();
 
    // Add a plot to the database with the given attributes (mutex'd)
-   void addPlot(int drone_id, int node_id, time_t timestamp, float lattitude, float longitude);
+   void addPlot(int drone_id, int node_id, time_t timestamp, float lattitude, float longitude, bool fromAnt=true);
 
    // Load or write the database to/from a CSV file, 
    int loadCSVFile(const char *filename);
@@ -92,6 +92,7 @@ public:
    void erase(unsigned int i);
    std::list<DronePlot>::iterator erase(std::list<DronePlot>::iterator dptr);
 
+   int dbnode = -10;
 
    // Return the number of plot points stored
    size_t size() { return _dbdata.size(); };
@@ -101,7 +102,6 @@ public:
 
 private:
    std::list<DronePlot> _dbdata;
-
    pthread_mutex_t _mutex; 
 };
 
