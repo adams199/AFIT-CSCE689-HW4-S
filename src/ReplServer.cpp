@@ -270,12 +270,18 @@ void ReplServer::handleDiff(DronePlot &tmp_plot)
             if((*it).node_id == 2)
                (*it).timestamp += _timediff1;
       }
+
       if(_timediff2 != checkchange2)
       {
          for(auto it = _plotdb.begin(); it != _plotdb.end(); it++)
             if((*it).node_id == 3)
                (*it).timestamp += _timediff2;
       }
+
+      if(tmp_plot.node_id == 2 && _timediff1 != -10)
+         tmp_plot.timestamp += _timediff1;  // add the difference
+      else if(tmp_plot.node_id == 3 && _timediff2 != -10)
+         tmp_plot.timestamp += _timediff2;
    }
 
    if(this->_plotdb.dbnode == 2)
@@ -307,6 +313,11 @@ void ReplServer::handleDiff(DronePlot &tmp_plot)
             if((*it).node_id == 3)
                (*it).timestamp += _timediff2;
       }
+
+      if(tmp_plot.node_id == 1 && _timediff1 != -10)
+         tmp_plot.timestamp += _timediff1;  // add the difference
+      else if(tmp_plot.node_id == 3 && _timediff2 != -10)
+         tmp_plot.timestamp += _timediff2;
    }
 
    if(this->_plotdb.dbnode == 3)
@@ -314,13 +325,13 @@ void ReplServer::handleDiff(DronePlot &tmp_plot)
       int checkchange1 = _timediff1;
       int checkchange2 = _timediff2;
 
-      if(_timediff1 == -10 && tmp_plot.node_id == 2) // if we havnt found the time diff between 3 and 2
+      if(_timediff1 == -10 && tmp_plot.node_id == 1) // if we havnt found the time diff between 3 and 1
          for(auto it = _plotdb.begin(); it != _plotdb.end(); it++) // if plot with same lat and long and its masters plot,
             if(tmp_plot.latitude == (*it).latitude && tmp_plot.longitude == (*it).longitude && tmp_plot.drone_id == (*it).drone_id && (*it).node_id == 3) {
                _timediff1 = (*it).timestamp - tmp_plot.timestamp; // set difference
                break; }
 
-      if(_timediff2 == -10 && tmp_plot.node_id == 1) // if we havnt found the time diff between 3 and 1
+      if(_timediff2 == -10 && tmp_plot.node_id == 2) // if we havnt found the time diff between 3 and 2
          for(auto it = _plotdb.begin(); it != _plotdb.end(); it++)  // if plot with same lat and long and its masters plot,
             if(tmp_plot.latitude == (*it).latitude && tmp_plot.longitude == (*it).longitude && tmp_plot.drone_id == (*it).drone_id && (*it).node_id == 3) {
                _timediff2 = (*it).timestamp - tmp_plot.timestamp; // set difference
@@ -329,14 +340,19 @@ void ReplServer::handleDiff(DronePlot &tmp_plot)
       if(_timediff1 != checkchange1)
       {
          for(auto it = _plotdb.begin(); it != _plotdb.end(); it++)
-            if((*it).node_id == 2)
+            if((*it).node_id == 1)
                (*it).timestamp += _timediff1;
       }
       if(_timediff2 != checkchange2)
       {
          for(auto it = _plotdb.begin(); it != _plotdb.end(); it++)
-            if((*it).node_id == 1)
+            if((*it).node_id == 2)
                (*it).timestamp += _timediff2;
       }
+
+      if(tmp_plot.node_id == 1 && _timediff1 != -10)
+         tmp_plot.timestamp += _timediff1;  // add the difference
+      else if(tmp_plot.node_id == 3 && _timediff2 != -10)
+         tmp_plot.timestamp += _timediff2;
    }
 }
