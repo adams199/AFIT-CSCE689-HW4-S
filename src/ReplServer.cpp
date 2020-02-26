@@ -221,25 +221,35 @@ void ReplServer::addSingleDronePlot(std::vector<uint8_t> &data) {
 
    if(_timediff1 == -10 && tmp_plot.node_id == 2) // if we havnt found the time diff between 1 and 2
       for(auto it = _plotdb.begin(); it != _plotdb.end(); it++) // if plot with same lat and long and its masters plot,
-         if(tmp_plot.latitude == (*it).latitude && tmp_plot.longitude == (*it).longitude && (*it).node_id == 1)
+         if(tmp_plot.latitude == (*it).latitude && tmp_plot.longitude == (*it).longitude && tmp_plot.drone_id == (*it).drone_id && (*it).node_id == 1) {
             _timediff1 = (*it).timestamp - tmp_plot.timestamp; // set difference
+            break; }
 
    if(_timediff2 == -10 && tmp_plot.node_id == 3) // if we havnt found the time diff between 1 and 3
       for(auto it = _plotdb.begin(); it != _plotdb.end(); it++)  // if plot with same lat and long and its masters plot,
-         if(tmp_plot.latitude == (*it).latitude && tmp_plot.longitude == (*it).longitude && (*it).node_id == 1)
+         if(tmp_plot.latitude == (*it).latitude && tmp_plot.longitude == (*it).longitude && tmp_plot.drone_id == (*it).drone_id && (*it).node_id == 1) {
             _timediff2 = (*it).timestamp - tmp_plot.timestamp; // set difference
-         
+            break; }
 
+
+   std::cout << "Current time " << this->getAdjustedTime() << " found differences " << _timediff1 << " " << _timediff2 << "\n";
    if(tmp_plot.node_id == 2 && _timediff1 != -10)
-      tmp_plot.timestamp += _timediff1;  // add the difference
+         tmp_plot.timestamp += _timediff1;  // add the difference
    else if(tmp_plot.node_id == 3 && _timediff2 != -10)
       tmp_plot.timestamp += _timediff2;
 
-   _plotdb.addPlot(tmp_plot.drone_id, tmp_plot.node_id, tmp_plot.timestamp, tmp_plot.latitude,
+   bool add = true;
+   for(auto it = _plotdb.begin(); it != _plotdb.end(); it++)
+   {
+      if((*it).drone_id == tmp_plot.drone_id && (*it).timestamp == tmp_plot.timestamp) {
+         add = false; break; }
+   }
+   if(add)
+      _plotdb.addPlot(tmp_plot.drone_id, tmp_plot.node_id, tmp_plot.timestamp, tmp_plot.latitude,
                                                          tmp_plot.longitude);
 }
 
 
-void ReplServer::shutdown() {
+void ReplServer::shutdown(){
    _shutdown = true;
 }
