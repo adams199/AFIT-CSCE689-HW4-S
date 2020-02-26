@@ -69,7 +69,7 @@ void AntennaSim::simulate() {
    // Set up a random offset between 1 and 3 seconds from true
    srand(time(NULL));
    _time_offset = (rand() % 6) - 3;
-   if (_verbosity >= 2) 
+   if (_verbosity >= 0) 
       std::cout << "SIM: Simulator time offset: " << _time_offset << " secs\n";
 
    if (_verbosity >= 1)
